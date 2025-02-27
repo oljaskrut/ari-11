@@ -1,5 +1,4 @@
 import { splitAudioBuffer } from "./buff-split"
-import { appendFileSync } from "fs"
 
 const CHUNK_DURATION_MS = 40
 
@@ -52,7 +51,6 @@ export class AudioQueue {
   }
   enqueue = (audioData: Buffer) => {
     this.queue.push(audioData)
-    appendFileSync("queue.txt", audioData.toString("base64") + "\n")
     this.processQueue()
   }
 
