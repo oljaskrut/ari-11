@@ -1,7 +1,6 @@
 import ari, { type Bridge, type Channel, type Client } from "ari-client"
 import { randomUUID } from "crypto"
 import { Call11 } from "../11abs/call11"
-import { cleanupARI } from "./cleanup"
 import { vars } from "../config"
 
 interface CallSession {
@@ -60,7 +59,6 @@ export class AriControllerIn {
 
     this.client.on("StasisEnd", async (_: any, channel: Channel) => {
       console.log(`Channel ${channel.id} has left Stasis application`)
-      await this.cleanupCallSession(channel.id)
     })
 
     this.client.on("APILoadError", (error: Error) => {
@@ -76,7 +74,6 @@ export class AriControllerIn {
 
     channel.on("ChannelHangupRequest", async () => {
       console.log(`Hangup requested for channel ${channel.id}`)
-      // await channel.hangup()
       await this.cleanupCallSession(channel.id)
     })
   }
@@ -108,7 +105,6 @@ export class AriControllerIn {
     } catch (error: any) {
       console.error(`Error handling incoming call for channel ${channel.id}:`, error?.message)
       await channel.hangup()
-      await this.cleanupCallSession(channel.id)
     }
   }
 
@@ -133,11 +129,11 @@ export class AriControllerIn {
       const onDisconnect = () => callSession.channel.hangup()
       const call11 = new Call11(callSession.sessionId, onDisconnect)
       callSession.call11 = call11
-      // testAudio(callSession.sessionId)
     })
 
     extChannel.on("StasisEnd", (event: any, chan: Channel) => {
       console.log(`External media channel ended: ${chan.id}`)
+      callSession.extChannel = undefined
     })
 
     await extChannel.externalMedia({
@@ -162,20 +158,15 @@ export class AriControllerIn {
 
     const cleanupPromises = [...this.activeCalls.keys()].map((channelId) => {
       const session = this.activeCalls.get(channelId)
-      if (session) {
-        return Promise.all([
-          session.channel
-            .hangup()
-            .catch((err) => console.error(`Error hanging up channel ${channelId}:`, err?.message)),
-          session.extChannel
-            ?.hangup()
-            .catch((err) => console.error(`Error hanging up ext channel for ${channelId}:`, err?.message)),
-          session.bridge
-            ?.destroy()
-            .catch((err) => console.error(`Error destroying bridge for ${channelId}:`, err?.message)),
-        ])
-      }
-      return Promise.resolve()
+      if (!session) return Promise.resolve()
+      return Promise.allSettled([
+        session.channel.hangup(),
+        // .catch((err) => console.error(`Error hanging up channel ${channelId}:`, err?.message)),
+        session.extChannel?.hangup(),
+        // .catch((err) => console.error(`Error hanging up ext channel for ${channelId}:`, err?.message)),
+        session.bridge?.destroy(),
+        // .catch((err) => console.error(`Error destroying bridge for ${channelId}:`, err?.message)),
+      ])
     })
 
     try {
