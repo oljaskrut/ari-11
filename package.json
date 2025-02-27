@@ -1,0 +1,16 @@
+{
+  "name": "ari-11",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@types/ari-client": "^2.2.13",
+    "ari-client": "^2.2.0",
+    "ws": "^8.18.1"
+  }
+}
