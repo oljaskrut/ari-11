@@ -1,5 +1,5 @@
 export const env = {
-  HOST: process.env.ASTERISK_HOST ?? "127.0.0.1",
+  HOST: process.env.ASTERISK_HOST ?? "localhost",
   AUDIO_SOCKET_PORT: 9999,
   ARI_PORT: 8088,
   WEB_SOCKET_PORT: 8081,

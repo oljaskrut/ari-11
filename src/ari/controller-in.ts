@@ -86,10 +86,10 @@ export class AriControllerIn {
     if (!session) return
 
     await session.call11?.disconnect()
-    await session.extChannel?.hangup().catch()
-    // .catch((err) => console.error(`Error hanging up ext channel for ${channelId}:`, err?.message))
     await session.bridge?.destroy().catch()
     // .catch((err) => console.error(`Error destroying bridge for ${channelId}:`, err?.message))
+    await session.extChannel?.hangup().catch()
+    // .catch((err) => console.error(`Error hanging up ext channel for ${channelId}:`, err?.message))
     this.activeCalls.delete(channelId)
   }
 
