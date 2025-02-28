@@ -4,14 +4,14 @@ import { Call11 } from "../11abs/call11"
 import { vars } from "../config"
 
 interface CallSession {
+  sessionId: string
   channel: Channel
   extChannel?: Channel
   bridge?: Bridge
-  sessionId: string
   call11?: Call11
 }
 
-export class AriControllerIn {
+export class AriController {
   // @ts-ignore
   private client: Client
   private activeCalls: Map<string, CallSession> = new Map()
@@ -22,60 +22,75 @@ export class AriControllerIn {
   }
 
   async connect() {
+    if (this.connected) return
     try {
       this.client = await ari.connect(vars.ariUrl, vars.ariUser, vars.ariPassword)
       await this.client.start("externalMedia")
       this.setCoreListeners()
-      console.log("connected")
+      console.log("ARI connected")
       this.connected = true
     } catch (error: any) {
       console.error("ARI error:", error?.message)
-      this.close()
+      this.disconnect()
+    }
+  }
+
+  async call(number: string, AGENT_ID?: string) {
+    if (!this.connected) return
+    try {
+      await this.client.Channel().originate({
+        endpoint: `PJSIP/${number}`,
+        app: "externalMedia",
+        formats: "slin16",
+        variables: { AGENT_ID },
+      })
+      console.log("Call Originate to", number)
+    } catch (e: any) {
+      console.error("Error originating call to", number, e?.message)
     }
   }
 
   setCoreListeners() {
-    this.client.on("StasisStart", async (_: any, channel: Channel) => {
-      try {
-        if (!channel.caller.number) return
-        console.log(`New call from ${channel.caller.number} to ${channel.connected.number}`)
-
-        const sessionId = randomUUID()
-
-        const callSession: CallSession = {
-          channel,
-          sessionId,
-        }
-
-        this.activeCalls.set(channel.id, callSession)
-        this.setupChannelEventListeners(channel)
-        await this.handleIncomingCall(callSession)
-      } catch (error) {
-        console.error("Error handling StasisStart event:", error)
-        await channel.hangup()
-        this.activeCalls.delete(channel.id)
-      }
-    })
-
-    this.client.on("StasisEnd", async (_: any, channel: Channel) => {
+    this.client.on("StasisStart", this.handleStatisStart)
+    this.client.on("StasisEnd", async (_, channel: Channel) => {
       console.log(`Channel ${channel.id} has left Stasis application`)
     })
-
-    this.client.on("APILoadError", (error: Error) => {
-      console.error("ARI client error:", error)
+    this.client.on("APILoadError", (error) => {
+      console.error("ARI client error:", error?.message)
     })
   }
 
-  setupChannelEventListeners(channel: Channel) {
-    channel.on("ChannelDestroyed", async () => {
-      console.log(`Channel ${channel.id} destroyed`)
-      await this.cleanupCallSession(channel.id)
-    })
+  async getChanVar(channel: Channel, variable: string) {
+    try {
+      const res = await channel.getChannelVar({ variable })
+      return res.value
+    } catch (e) {
+      return
+    }
+  }
 
-    channel.on("ChannelHangupRequest", async () => {
-      console.log(`Hangup requested for channel ${channel.id}`)
-      await this.cleanupCallSession(channel.id)
-    })
+  handleStatisStart = async (_: any, channel: Channel) => {
+    if (!channel.caller.number) return
+    try {
+      console.log(`New call from ${channel.caller.number} to ${channel.connected.number}`)
+      const sessionId = randomUUID()
+      const callSession: CallSession = {
+        sessionId,
+        channel,
+      }
+      this.activeCalls.set(channel.id, callSession)
+
+      channel.on("ChannelHangupRequest", async () => {
+        console.log(`Hangup requested for channel ${channel.id}`)
+        await this.cleanupCallSession(channel.id)
+      })
+
+      await this.handleIncomingCall(callSession)
+    } catch (error) {
+      console.error("Error handling StasisStart event:", error)
+      await channel.hangup()
+      this.activeCalls.delete(channel.id)
+    }
   }
 
   async cleanupCallSession(channelId: string) {
@@ -84,9 +99,7 @@ export class AriControllerIn {
 
     await session.call11?.disconnect()
     await session.bridge?.destroy().catch()
-    // .catch((err) => console.error(`Error destroying bridge for ${channelId}:`, err?.message))
     await session.extChannel?.hangup().catch()
-    // .catch((err) => console.error(`Error hanging up ext channel for ${channelId}:`, err?.message))
     this.activeCalls.delete(channelId)
   }
 
@@ -112,26 +125,24 @@ export class AriControllerIn {
     const bridge = this.client.Bridge()
     await bridge.create({ type: "mixing" })
     console.log(`Bridge created with id: ${bridge.id}`)
-
     callSession.bridge = bridge
-
     return bridge
   }
 
   async createExtChannel(callSession: CallSession) {
+    const { bridge, sessionId } = callSession
+    if (!bridge) return
+
     const extChannel = this.client.Channel()
+    extChannel.on("StasisStart", async (_, chan: Channel) => {
+      await bridge.addChannel({ channel: chan.id })
+      console.log(`External media channel ${chan.id} added to bridge ${bridge.id}.`)
 
-    extChannel.on("StasisStart", async (event: any, chan: Channel) => {
-      if (!callSession.bridge) return
-      await callSession.bridge.addChannel({ channel: chan.id })
-      console.log(`External media channel ${chan.id} added to bridge ${callSession.bridge.id}.`)
-
-      const onDisconnect = () => callSession.channel.hangup()
-      const call11 = new Call11(callSession.sessionId, onDisconnect)
-      callSession.call11 = call11
+      const agentId = await this.getChanVar(chan, "AGENT_ID")
+      const onDisconnect = () => chan.hangup()
+      callSession.call11 = new Call11(sessionId, { onDisconnect, agentId })
     })
-
-    extChannel.on("StasisEnd", (event: any, chan: Channel) => {
+    extChannel.on("StasisEnd", (_, chan: Channel) => {
       console.log(`External media channel ended: ${chan.id}`)
       callSession.extChannel = undefined
     })
@@ -145,28 +156,19 @@ export class AriControllerIn {
       // @ts-ignore
       data: callSession.sessionId,
     })
-
-    console.log("External media sessionId: ", callSession.sessionId)
     callSession.extChannel = extChannel
+    console.log("External media sessionId: ", sessionId)
   }
 
-  async close() {
+  async disconnect() {
     if (!this.connected) return
     console.log("Closing ARI session...")
-
-    // await cleanupARI(this.client)
 
     const cleanupPromises = [...this.activeCalls.keys()].map((channelId) => {
       const session = this.activeCalls.get(channelId)
       if (!session) return Promise.resolve()
-      return Promise.allSettled([
-        session.channel.hangup(),
-        // .catch((err) => console.error(`Error hanging up channel ${channelId}:`, err?.message)),
-        session.extChannel?.hangup(),
-        // .catch((err) => console.error(`Error hanging up ext channel for ${channelId}:`, err?.message)),
-        session.bridge?.destroy(),
-        // .catch((err) => console.error(`Error destroying bridge for ${channelId}:`, err?.message)),
-      ])
+      const promises = [session.channel.hangup(), session.extChannel?.hangup(), session.bridge?.destroy()]
+      return Promise.allSettled(promises)
     })
 
     try {
@@ -175,6 +177,9 @@ export class AriControllerIn {
       await this.client?.stop()
     } catch (error) {
       console.error("Error during ARI session close:", error)
+    } finally {
+      console.log("Closed ARI")
+      this.connected = false
     }
   }
 }

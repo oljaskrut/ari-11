@@ -4,13 +4,15 @@ import type { AudioQueue } from "../utils/audio-queue"
 import { vars } from "../config"
 
 export class ElevenLabs {
+  agentId: string
   sessionId: string
   elevenLabsWs: WebSocket | undefined
   isConnected = false
   audioQueue: AudioQueue
   onDisconnect?: () => void
 
-  constructor(sessionId: string, audioQueue: AudioQueue, onDisconnect?: () => void) {
+  constructor(agentId: string, sessionId: string, audioQueue: AudioQueue, onDisconnect?: () => void) {
+    this.agentId = agentId
     this.sessionId = sessionId
     this.audioQueue = audioQueue
     this.onDisconnect = onDisconnect
@@ -19,7 +21,7 @@ export class ElevenLabs {
   init() {
     if (this.elevenLabsWs) return
 
-    const elevenLabsWs = new WebSocket(vars.elevenLabsUrl)
+    const elevenLabsWs = new WebSocket(`${vars.elevenLabsUrl}?agentId=${this.agentId}`)
 
     elevenLabsWs.on("open", () => {
       console.info(`[${this.sessionId}] 11abs connected`)

@@ -8,10 +8,13 @@ export class Call11 {
   onDisconnect?: () => void
   clientWs?: WebSocket
   elevenLabs?: ElevenLabs
+  agentId: string
 
-  constructor(sessionId: string, onDisconnect?: () => void) {
+  constructor(sessionId: string, { onDisconnect, agentId }: { onDisconnect?: () => void; agentId?: string } = {}) {
     this.sessionId = sessionId
     this.onDisconnect = onDisconnect
+
+    this.agentId = agentId ?? vars.defaultAgentId
 
     this.initClientWs()
     this.initElevenLabs()
@@ -20,7 +23,7 @@ export class Call11 {
   initElevenLabs() {
     const sendAudioOut = (data: Buffer) => this.clientWs?.send(data)
     const audioQueue = new AudioQueue(sendAudioOut)
-    const elevenLabs = new ElevenLabs(this.sessionId, audioQueue, this.onDisconnect)
+    const elevenLabs = new ElevenLabs(this.agentId, this.sessionId, audioQueue, this.onDisconnect)
     this.elevenLabs = elevenLabs
     elevenLabs.init()
   }

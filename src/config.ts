@@ -16,5 +16,6 @@ export const vars = {
   webSocketUrl: `ws://${env.HOST}:${env.WEB_SOCKET_PORT}`,
   dialString: "PJSIP/702@kcell",
 
-  elevenLabsUrl: `wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${env.AGENT_ID}`,
+  defaultAgentId: env.AGENT_ID,
+  elevenLabsUrl: `wss://api.elevenlabs.io/v1/convai/conversation`,
 }
