@@ -14,6 +14,7 @@ export class AriController {
 
   constructor({ onConnect }: { onConnect?: () => void } = {}) {
     this.onConnect = onConnect
+    this.connect()
   }
 
   async connect() {
