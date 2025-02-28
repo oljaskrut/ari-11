@@ -1,6 +1,5 @@
 import type { Client } from "ari-client"
 import { vars } from "../config"
-import { delay } from "../utils/utils"
 
 export const callMethod =
   (client: Client) =>
@@ -10,17 +9,24 @@ export const callMethod =
 
     return new Promise(async (resolve) => {
       try {
+        let timer: Timer | undefined = undefined
+
+        const send = (data: any) => {
+          clearTimeout(timer)
+          resolve(data)
+        }
+
         const channel = client.Channel()
         channel.on("ChannelHangupRequest", (event) => {
           console.log("HangupRequest", number, event.cause)
-          resolve(`HangupRequest:${event.cause}`)
+          send(`HangupRequest:${event.cause}`)
         })
         channel.on("ChannelStateChange", (event) => {
           if (event.channel.state === "Ringing") {
             console.log("Ringing", number)
           } else if (event.channel.state === "Up") {
             console.log("Up", number)
-            resolve(`Up:${event.channel.id}`)
+            send(`Up:${event.channel.id}`)
           } else {
             console.log("ChannelStateChange", number, event.channel.state)
           }
@@ -33,11 +39,11 @@ export const callMethod =
           variables: { AGENT_ID },
         })
 
-        delay(timeout).then(() => {
+        timer = setTimeout(() => {
           console.log("call timed out")
           channel.hangup()
           resolve("timeout")
-        })
+        }, timeout)
         console.log("Call Originate", number)
       } catch (e: any) {
         console.error("Error originating call", number, e?.message)
