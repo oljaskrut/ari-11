@@ -31,8 +31,8 @@ app.get("/call/:number", async (req, res) => {
 })
 
 app.get("/cleanup", async (_, res) => {
-  await controller.apiMethods?.cleanup()
-  res.send({ success: true })
+  const result = (await controller.apiMethods?.cleanup()) ?? null
+  res.send({ success: result })
 })
 
 app.get("/channels", async (_, res) => {

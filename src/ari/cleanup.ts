@@ -7,23 +7,30 @@ if (process.argv[2]) {
 }
 
 export async function cleanupARI(client: Client) {
-  const channels = await client.channels.list()
+  try {
+    const channels = await client.channels.list()
 
-  console.log("channels", channels.length)
+    console.log("channels", channels.length)
 
-  channels.forEach(async (channel) => {
-    if (channel.state === "Up") {
-      const chan = await client.channels.get({ channelId: channel.id })
-      await chan.hangup()
-    }
-  })
+    channels.forEach(async (channel) => {
+      if (channel.state === "Up") {
+        const chan = await client.channels.get({ channelId: channel.id })
+        await chan.hangup()
+      }
+    })
 
-  const bridges = await client.bridges.list()
+    const bridges = await client.bridges.list()
 
-  console.log("bridges", bridges.length)
+    console.log("bridges", bridges.length)
 
-  bridges.forEach(async (bridge) => {
-    const brd = await client.bridges.get({ bridgeId: bridge.id })
-    await brd.destroy()
-  })
+    bridges.forEach(async (bridge) => {
+      const brd = await client.bridges.get({ bridgeId: bridge.id })
+      await brd.destroy()
+    })
+
+    return true
+  } catch (e) {
+    console.log("error cleanupARI", e)
+    return false
+  }
 }

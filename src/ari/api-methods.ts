@@ -10,7 +10,7 @@ export class ApiMethods {
   }
 
   async cleanup() {
-    await cleanupARI(this.client)
+    return cleanupARI(this.client)
   }
   async channelsList() {
     return this.client.channels.list()
