@@ -1,173 +1,48 @@
-import ari, { type Bridge, type Channel, type Client } from "ari-client"
-import { randomUUID } from "crypto"
-import { Call11 } from "../11abs/call11"
+import ari, { type Client } from "ari-client"
 import { vars } from "../config"
-import { cleanupARI } from "./cleanup"
-
-interface CallSession {
-  sessionId: string
-  channel: Channel
-  extChannel?: Channel
-  bridge?: Bridge
-  call11?: Call11
-}
+import { ApiMethods } from "./api-methods"
+import type { ActiveCalls } from "./types"
+import { EventListeners } from "./event-listeners"
 
 export class AriController {
-  // @ts-ignore
-  private client: Client
-  private activeCalls: Map<string, CallSession> = new Map()
+  private client?: Client
+  private activeCalls: ActiveCalls = new Map()
   connected = false
+  connecting = false
+  onConnect?: () => void
+  apiMethods?: ApiMethods
 
-  constructor() {}
+  constructor({ onConnect }: { onConnect?: () => void } = {}) {
+    this.onConnect = onConnect
+  }
 
   async connect() {
-    if (this.connected) return
+    if (this.connected || this.connecting) return true
+    this.connecting = true
     try {
       this.client = await ari.connect(vars.ariUrl, vars.ariUser, vars.ariPassword)
-      await this.client.start("externalMedia")
-      this.setCoreListeners()
+      await this.client.start(vars.defaultApp)
       console.log("ARI connected")
       this.connected = true
+
+      const listeners = new EventListeners(this.client, this.activeCalls)
+      listeners.setListeners()
+
+      this.apiMethods = new ApiMethods(this.client)
+
+      this.onConnect?.()
+      return true
     } catch (error: any) {
       console.error("ARI error:", error?.message)
       this.disconnect()
+      return false
+    } finally {
+      this.connecting = false
     }
-  }
-
-  async call(number: string, AGENT_ID?: string) {
-    if (!this.connected) return
-    try {
-      await this.client.Channel().originate({
-        endpoint: `PJSIP/${number}`,
-        app: "externalMedia",
-        formats: "slin16",
-        callerId: "Pleep",
-        variables: { AGENT_ID },
-      })
-      console.log("Call Originate to", number)
-    } catch (e: any) {
-      console.error("Error originating call to", number, e?.message)
-    }
-  }
-
-  setCoreListeners() {
-    this.client.on("StasisStart", this.handleStatisStart)
-    this.client.on("StasisEnd", async (_, channel: Channel) => {
-      console.log(`Channel ${channel.id} has left Stasis application`)
-    })
-    this.client.on("APILoadError", (error) => {
-      console.error("ARI client error:", error?.message)
-    })
-  }
-
-  handleStatisStart = async (_: any, channel: Channel) => {
-    if (!channel.caller.number && !channel.caller.name) return
-
-    try {
-      console.log(`New call from ${channel.caller.number} to ${channel.connected.number}`)
-      const sessionId = randomUUID()
-      const callSession: CallSession = {
-        sessionId,
-        channel,
-      }
-      this.activeCalls.set(channel.id, callSession)
-
-      channel.on("ChannelHangupRequest", async () => {
-        console.log(`Hangup requested for channel ${channel.id}`)
-        await this.cleanupCallSession(channel.id)
-      })
-
-      await this.handleIncomingCall(callSession)
-    } catch (error) {
-      console.error("Error handling StasisStart event:", error)
-      await channel.hangup()
-      this.activeCalls.delete(channel.id)
-    }
-  }
-
-  async cleanupCallSession(channelId: string) {
-    const session = this.activeCalls.get(channelId)
-    if (!session) return
-
-    await session.call11?.disconnect()
-    await session.bridge?.destroy().catch()
-    await session.extChannel?.hangup().catch()
-    this.activeCalls.delete(channelId)
-  }
-
-  async handleIncomingCall(callSession: CallSession) {
-    const { channel } = callSession
-
-    try {
-      console.log(`Answering channel ${channel.id}`)
-      await channel.answer()
-
-      const bridge = await this.createBridge(callSession)
-      await bridge.addChannel({ channel: channel.id })
-      console.log(`Incoming channel ${channel.id} added to bridge ${bridge.id}.`)
-
-      await this.createExtChannel(callSession)
-    } catch (error: any) {
-      console.error(`Error handling incoming call for channel ${channel.id}:`, error?.message)
-      await channel.hangup()
-    }
-  }
-
-  async createBridge(callSession: CallSession) {
-    const bridge = this.client.Bridge()
-    await bridge.create({ type: "mixing" })
-    console.log(`Bridge created with id: ${bridge.id}`)
-    callSession.bridge = bridge
-    return bridge
-  }
-
-  async createExtChannel(callSession: CallSession) {
-    const { bridge, sessionId } = callSession
-    if (!bridge) return
-
-    const extChannel = this.client.Channel()
-    extChannel.on("StasisStart", async (_, chan: Channel) => {
-      await bridge.addChannel({ channel: chan.id })
-      console.log(`External media channel ${chan.id} added to bridge ${bridge.id}.`)
-
-      const agentId = await this.getChanVar(callSession.channel, "AGENT_ID")
-      const onDisconnect = () => callSession.channel.hangup()
-      callSession.call11 = new Call11(sessionId, { onDisconnect, agentId })
-    })
-    extChannel.on("StasisEnd", (_, chan: Channel) => {
-      console.log(`External media channel ended: ${chan.id}`)
-      callSession.extChannel = undefined
-    })
-
-    await extChannel.externalMedia({
-      app: "externalMedia",
-      external_host: vars.audioSocketHost,
-      format: "slin16",
-      transport: "tcp",
-      encapsulation: "audiosocket",
-      // @ts-ignore
-      data: callSession.sessionId,
-    })
-    callSession.extChannel = extChannel
-    console.log("External media sessionId: ", sessionId)
-  }
-
-  async getChanVar(channel: Channel, variable: string) {
-    try {
-      const res = await channel.getChannelVar({ variable })
-      return res.value
-    } catch (e: any) {
-      return
-    }
-  }
-
-  async cleanup() {
-    if (!this.connected) return
-    await cleanupARI(this.client)
   }
 
   async disconnect() {
-    if (!this.connected) return
+    if (!this.connected) return true
     console.log("Closing ARI session...")
 
     const cleanupPromises = [...this.activeCalls.keys()].map((channelId) => {
@@ -177,15 +52,19 @@ export class AriController {
       return Promise.allSettled(promises)
     })
 
+    this.apiMethods = undefined
+
     try {
       await Promise.all(cleanupPromises)
       this.activeCalls.clear()
+      // maybe remove listeners
       await this.client?.stop()
     } catch (error) {
       console.error("Error during ARI session close:", error)
     } finally {
       console.log("Closed ARI")
       this.connected = false
+      return true
     }
   }
 }

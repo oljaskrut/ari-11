@@ -9,3 +9,5 @@ export const safeParseJSON = (str: string) => {
 export const timestamp = () => {
   return ~~(Date.now() / 1000)
 }
+
+export const delay = (ms = 1000) => new Promise((resolve) => setTimeout(resolve, ms))

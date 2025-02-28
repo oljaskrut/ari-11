@@ -14,8 +14,12 @@ export const vars = {
   ariPassword: env.ARI_PASS,
   audioSocketHost: `${env.HOST}:${env.AUDIO_SOCKET_PORT}`,
   webSocketUrl: `ws://${env.HOST}:${env.WEB_SOCKET_PORT}`,
-  dialString: "PJSIP/702@kcell",
 
   defaultAgentId: env.AGENT_ID,
   elevenLabsUrl: `wss://api.elevenlabs.io/v1/convai/conversation`,
+
+  defaultApp: "externalMedia",
+  defaultFormat: "slin16",
+  defaultTransport: "tcp",
+  defaultEncapsulation: "audiosocket",
 }
