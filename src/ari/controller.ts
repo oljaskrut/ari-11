@@ -63,7 +63,8 @@ export class AriController {
   }
 
   handleStatisStart = async (_: any, channel: Channel) => {
-    if (!channel.caller.number) return
+    if (!channel.caller.number && !channel.caller.name) return
+
     try {
       console.log(`New call from ${channel.caller.number} to ${channel.connected.number}`)
       const sessionId = randomUUID()
