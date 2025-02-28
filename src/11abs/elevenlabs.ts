@@ -21,7 +21,7 @@ export class ElevenLabs {
   init() {
     if (this.elevenLabsWs) return
 
-    const elevenLabsWs = new WebSocket(`${vars.elevenLabsUrl}?agentId=${this.agentId}`)
+    const elevenLabsWs = new WebSocket(`${vars.elevenLabsUrl}?agent_id=${this.agentId}`)
 
     elevenLabsWs.on("open", () => {
       console.info(`[${this.sessionId}] 11abs connected`)
