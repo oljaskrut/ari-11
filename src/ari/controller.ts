@@ -18,9 +18,7 @@ export class AriController {
   private activeCalls: Map<string, CallSession> = new Map()
   connected = false
 
-  constructor() {
-    this.connect()
-  }
+  constructor() {}
 
   async connect() {
     if (this.connected) return
