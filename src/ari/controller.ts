@@ -2,6 +2,7 @@ import ari, { type Bridge, type Channel, type Client } from "ari-client"
 import { randomUUID } from "crypto"
 import { Call11 } from "../11abs/call11"
 import { vars } from "../config"
+import { cleanupARI } from "./cleanup"
 
 interface CallSession {
   sessionId: string
@@ -42,6 +43,7 @@ export class AriController {
         endpoint: `PJSIP/${number}`,
         app: "externalMedia",
         formats: "slin16",
+        callerId: "Pleep",
         variables: { AGENT_ID },
       })
       console.log("Call Originate to", number)
@@ -58,15 +60,6 @@ export class AriController {
     this.client.on("APILoadError", (error) => {
       console.error("ARI client error:", error?.message)
     })
-  }
-
-  async getChanVar(channel: Channel, variable: string) {
-    try {
-      const res = await channel.getChannelVar({ variable })
-      return res.value
-    } catch (e) {
-      return
-    }
   }
 
   handleStatisStart = async (_: any, channel: Channel) => {
@@ -138,8 +131,8 @@ export class AriController {
       await bridge.addChannel({ channel: chan.id })
       console.log(`External media channel ${chan.id} added to bridge ${bridge.id}.`)
 
-      const agentId = await this.getChanVar(chan, "AGENT_ID")
-      const onDisconnect = () => chan.hangup()
+      const agentId = await this.getChanVar(callSession.channel, "AGENT_ID")
+      const onDisconnect = () => callSession.channel.hangup()
       callSession.call11 = new Call11(sessionId, { onDisconnect, agentId })
     })
     extChannel.on("StasisEnd", (_, chan: Channel) => {
@@ -158,6 +151,20 @@ export class AriController {
     })
     callSession.extChannel = extChannel
     console.log("External media sessionId: ", sessionId)
+  }
+
+  async getChanVar(channel: Channel, variable: string) {
+    try {
+      const res = await channel.getChannelVar({ variable })
+      return res.value
+    } catch (e: any) {
+      return
+    }
+  }
+
+  async cleanup() {
+    if (!this.connected) return
+    await cleanupARI(this.client)
   }
 
   async disconnect() {

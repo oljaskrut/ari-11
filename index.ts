@@ -24,7 +24,12 @@ app.get("/connect", async (_, res) => {
   process.exit(1)
 })
 
-app.post("/call/:number", async (req, res) => {
+app.get("/cleanup", async (_, res) => {
+  await controller.cleanup()
+  res.send({ success: true })
+})
+
+app.get("/call/:number", async (req, res) => {
   const number = req.params.number
   if (!number) {
     res.send({ success: false, error: "Invalid number" })
