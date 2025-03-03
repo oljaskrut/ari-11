@@ -7,7 +7,6 @@ export class AudioQueue {
   chunkDurationMs = CHUNK_DURATION_MS
   public queue: Buffer[]
   public processing = false
-  public interrupted = false
   private currentTimer: Timer | null = null
 
   constructor(callback: (buffer: Buffer) => void) {
@@ -31,11 +30,6 @@ export class AudioQueue {
     })
 
     const sendChunk = (index: number) => {
-      if (this.interrupted) {
-        console.log(Date.now(), "audio interrupted")
-        this.processing = false
-        return
-      }
       if (index < chunks.length) {
         this.callback(chunks[index])
         this.currentTimer = setTimeout(() => {
@@ -56,11 +50,12 @@ export class AudioQueue {
 
   public interrupt() {
     console.log(`[${new Date().toISOString()}] Interrupt received, clearing audio queue.`)
-    this.interrupted = true
     this.queue = []
+
     if (this.currentTimer) {
       clearTimeout(this.currentTimer)
       this.currentTimer = null
     }
+    this.processing = false
   }
 }
