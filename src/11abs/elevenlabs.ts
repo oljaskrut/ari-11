@@ -46,7 +46,7 @@ export class ElevenLabs {
       switch (message.type) {
         case "conversation_initiation_metadata":
           // console.info("1abs got initiation metadata")
-          // console.log(message)
+          console.log(`[${this.sessionId}] 11abs conversation_id:`, message.conversation_initiation_metadata_event.conversation_id)
           break
 
         case "user_transcript":

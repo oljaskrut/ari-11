@@ -47,7 +47,7 @@ export class EventListeners {
     if (!session) return
 
     await session.call11?.disconnect()
-		// fucked by not catchable errors
+    // fucked by not catchable errors
     // await session.bridge?.destroy().catch()
     await session.extChannel?.hangup().catch()
     this.activeCalls.delete(channelId)
