@@ -3,6 +3,7 @@ const app = Router()
 
 import { AriController } from "./ari/controller"
 import { timestamp } from "./utils/utils"
+import { vars } from "./config"
 
 const controller = new AriController()
 
@@ -14,6 +15,16 @@ app.get("/disconnect", async (_, res) => {
 app.get("/connect", async (_, res) => {
   const result = await controller.connect()
   res.send({ success: result })
+})
+
+app.get("/set-agent/:agentId", (req, res) => {
+  const agentId = req.params.agentId
+  if (!agentId) {
+    res.send({ success: false, error: "Invalid agentId" })
+    return
+  }
+  vars.defaultAgentId = agentId
+  res.send({ success: true, timestamp: timestamp(), agentId: vars.defaultAgentId })
 })
 
 app.get("/call/:number", async (req, res) => {
