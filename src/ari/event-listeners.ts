@@ -3,6 +3,7 @@ import { randomUUID } from "crypto"
 import type { ActiveCalls, CallSession } from "./types"
 import { vars } from "../config"
 import { Call11 } from "../11abs/call11"
+import axios from "axios"
 
 export class EventListeners {
   constructor(private client: Client, private activeCalls: ActiveCalls) {}
@@ -89,7 +90,20 @@ export class EventListeners {
       console.log(`External media channel ${chan.id} added to bridge ${bridge.id}.`)
 
       const agentId = await this.getChanVar(callSession.channel, "AGENT_ID")
-      const onDisconnect = () => callSession.channel.hangup()
+      const onDisconnect = async (agentId: string, conversationId?: string) => {
+        callSession.channel.hangup()
+        if (!conversationId) return console.log("onDisconnect no conversationid")
+        try {
+          await axios.post("http://localhost:3000/api/internal/voice-agents", {
+            number: callSession.channel.caller.number,
+            agentId,
+            conversationId,
+          })
+          console.log("disconnect webhook done", callSession.channel.caller.number, agentId, conversationId)
+        } catch (e: any) {
+          console.log("error disconnect webhook", e?.message)
+        }
+      }
       callSession.call11 = new Call11(sessionId, { onDisconnect, agentId })
     })
     extChannel.on("StasisEnd", (_, chan: Channel) => {

@@ -12,6 +12,7 @@
     "@types/ari-client": "^2.2.13",
     "@types/express": "^5.0.0",
     "ari-client": "^2.2.0",
+    "axios": "^1.8.1",
     "express": "^4.21.2",
     "ws": "^8.18.1"
   }

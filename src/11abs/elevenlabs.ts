@@ -9,9 +9,15 @@ export class ElevenLabs {
   elevenLabsWs: WebSocket | undefined
   isConnected = false
   audioQueue: AudioQueue
-  onDisconnect?: () => void
+  onDisconnect?: (agentId: string, conversationId?: string) => void
+  conversationId?: string
 
-  constructor(agentId: string, sessionId: string, audioQueue: AudioQueue, onDisconnect?: () => void) {
+  constructor(
+    agentId: string,
+    sessionId: string,
+    audioQueue: AudioQueue,
+    onDisconnect?: (agentId: string, conversationId?: string) => void,
+  ) {
     this.agentId = agentId
     this.sessionId = sessionId
     this.audioQueue = audioQueue
@@ -30,7 +36,7 @@ export class ElevenLabs {
     elevenLabsWs.on("error", (error) => console.error("11abs error:", error))
     elevenLabsWs.on("close", () => {
       console.info(`[${this.sessionId}] 11abs disconnected`)
-      this.onDisconnect?.()
+      this.onDisconnect?.(this.agentId, this.conversationId)
     })
 
     this.isConnected = true
@@ -46,7 +52,11 @@ export class ElevenLabs {
       switch (message.type) {
         case "conversation_initiation_metadata":
           // console.info("1abs got initiation metadata")
-          console.log(`[${this.sessionId}] 11abs conversation_id:`, message.conversation_initiation_metadata_event.conversation_id)
+          this.conversationId = message.conversation_initiation_metadata_event.conversation_id
+          console.log(
+            `[${this.sessionId}] 11abs conversation_id:`,
+            message.conversation_initiation_metadata_event.conversation_id,
+          )
           break
 
         case "user_transcript":

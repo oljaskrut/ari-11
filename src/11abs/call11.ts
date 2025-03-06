@@ -5,12 +5,18 @@ import { vars } from "../config"
 
 export class Call11 {
   sessionId: string
-  onDisconnect?: () => void
+  onDisconnect?: (agentId: string, conversationId?: string) => void
   clientWs?: WebSocket
   elevenLabs?: ElevenLabs
   agentId: string
 
-  constructor(sessionId: string, { onDisconnect, agentId }: { onDisconnect?: () => void; agentId?: string } = {}) {
+  constructor(
+    sessionId: string,
+    {
+      onDisconnect,
+      agentId,
+    }: { onDisconnect?: (agentId: string, conversationId?: string) => void; agentId?: string } = {},
+  ) {
     this.sessionId = sessionId
     this.onDisconnect = onDisconnect
 
