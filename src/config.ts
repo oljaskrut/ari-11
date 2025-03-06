@@ -6,6 +6,7 @@ export const env = {
   ARI_USER: process.env.ARI_USER ?? "",
   ARI_PASS: process.env.ARI_PASS ?? "",
   AGENT_ID: process.env.AGENT_ID ?? "",
+  WEBHOOK_URL: process.env.WEBHOOK_URL ?? "",
 }
 
 export const vars = {
@@ -17,6 +18,8 @@ export const vars = {
 
   defaultAgentId: env.AGENT_ID,
   elevenLabsUrl: `wss://api.elevenlabs.io/v1/convai/conversation`,
+
+  webhookUrl: env.WEBHOOK_URL,
 
   defaultApp: "externalMedia",
   defaultFormat: "slin16",

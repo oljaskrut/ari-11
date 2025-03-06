@@ -94,7 +94,7 @@ export class EventListeners {
         callSession.channel.hangup()
         if (!conversationId) return console.log("onDisconnect no conversationid")
         try {
-          await axios.post("http://localhost:3000/api/internal/voice-agents", {
+          await axios.post(vars.webhookUrl, {
             number: callSession.channel.caller.number,
             agentId,
             conversationId,
