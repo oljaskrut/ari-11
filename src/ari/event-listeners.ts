@@ -94,14 +94,14 @@ export class EventListeners {
         callSession.channel.hangup()
         if (!conversationId) return console.log("onDisconnect no conversationid")
         try {
-          await axios.post(vars.webhookUrl, {
-            number: callSession.channel.caller.number,
+          const { data } = await axios.post(vars.webhookUrl, {
+            number: callSession.channel.caller.number.replace("+", ""),
             agentId,
             conversationId,
           })
-          console.log("disconnect webhook done", callSession.channel.caller.number, agentId, conversationId)
+          console.log("disconnect webhook done", callSession.channel.caller.number, agentId, conversationId, data)
         } catch (e: any) {
-          console.log("error disconnect webhook", e?.message)
+          console.log("error disconnect webhook", e?.message, e?.response?.data)
         }
       }
       callSession.call11 = new Call11(sessionId, { onDisconnect, agentId })
