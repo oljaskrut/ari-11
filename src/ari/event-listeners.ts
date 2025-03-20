@@ -22,7 +22,9 @@ export class EventListeners {
     if (!channel.caller.number && !channel.caller.name) return
 
     try {
-      console.log(`New call from ${channel.caller.number} to ${channel.connected.number}`)
+      // @ts-ignore
+      const receivingNumber = channel?.caller_rdnis
+      console.log(`New call from ${channel.caller.number} to ${channel.connected.number} (${receivingNumber})`)
       const sessionId = randomUUID()
       const callSession: CallSession = {
         sessionId,
@@ -93,6 +95,8 @@ export class EventListeners {
       const onDisconnect = async (agentId: string, conversationId?: string) => {
         callSession.channel.hangup()
         if (!conversationId) return console.log("onDisconnect no conversationid")
+        // no webhooks for now, soon
+        return
         try {
           const { data } = await axios.post(vars.webhookUrl, {
             number: callSession.channel.caller.number.replace("+", ""),
