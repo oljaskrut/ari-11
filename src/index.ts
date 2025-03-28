@@ -1,6 +1,6 @@
 import express from "express"
-import { timestamp } from "./src/utils/utils"
-import { ariRoutes } from "./src/ari-routes"
+import { timestamp } from "./utils/utils"
+import { ariRoutes } from "./ari-routes"
 
 const PORT = process.env.PORT || 8000
 

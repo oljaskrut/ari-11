@@ -1,11 +1,5 @@
 import ari, { type Client } from "ari-client"
 
-if (process.argv[2]) {
-  console.log("cleanup")
-  const client = await ari.connect("http://191.101.2.43:8088", "oljas", "Oljas1")
-  await cleanupARI(client)
-}
-
 export async function cleanupARI(client: Client) {
   try {
     const channels = await client.channels.list()
