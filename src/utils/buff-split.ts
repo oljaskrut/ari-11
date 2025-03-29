@@ -16,7 +16,7 @@ export function splitAudioBuffer(
     sampleRate = 8000,
     bytesPerSample = 2,
     channels = 1,
-    chunkDurationMs = 100,
+    chunkDurationMs = 40,
   }: { sampleRate?: number; bytesPerSample?: number; channels?: number; chunkDurationMs?: number } = {},
 ) {
   // Calculate the number of bytes in each chunk.
