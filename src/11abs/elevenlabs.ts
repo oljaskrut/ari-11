@@ -104,9 +104,10 @@ export class ElevenLabs {
   }
 
   sendAudio = (message: Buffer) => {
-    if (!this.isConnected) return console.warn("sendAudio, while not connected")
-    if (!this.elevenLabsWs) return console.warn("sendAudio, while no 11ws")
-    if (this.elevenLabsWs.readyState !== WebSocket.OPEN) return console.warn("sendAudio, while ws closed")
+    if (!this.isConnected) return
+    if (!this.elevenLabsWs) return
+    if (this.elevenLabsWs.readyState !== WebSocket.OPEN)
+      return console.warn("sendAudio, while ws closed", message.byteLength)
     this.elevenLabsWs?.send(
       JSON.stringify({
         user_audio_chunk: message.toString("base64"),
