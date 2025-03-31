@@ -1,3 +1,5 @@
+export const BLANK_VALUE = "_"
+
 export const env = {
   HOST: process.env.ASTERISK_HOST ?? "localhost",
   AUDIO_SOCKET_PORT: 9999,
@@ -6,7 +8,7 @@ export const env = {
   ARI_USER: process.env.ARI_USER ?? "",
   ARI_PASS: process.env.ARI_PASS ?? "",
   AGENT_ID: process.env.AGENT_ID ?? "",
-  WEBHOOK_URL: process.env.WEBHOOK_URL ?? "",
+  WEBHOOK_URL: process.env.WEBHOOK_URL ?? BLANK_VALUE,
 }
 
 export const vars = {

@@ -1,7 +1,7 @@
 import type { Channel, Client } from "ari-client"
 import { randomUUID } from "crypto"
 import type { ActiveCalls, CallSession } from "./types"
-import { vars } from "../config"
+import { BLANK_VALUE, vars } from "../config"
 import { Call11 } from "../11abs/call11"
 import { getAgentId, getCallerNumber } from "./helper"
 import axios from "axios"
@@ -109,6 +109,7 @@ export class EventListeners {
         callSession.channel.hangup()
         if (!conversationId) return console.log("onDisconnect no conversationid")
         // no webhooks for now, soon
+        if (vars.webhookUrl === BLANK_VALUE) return
         try {
           const { data } = await axios.post(vars.webhookUrl, {
             number: callerNumber,

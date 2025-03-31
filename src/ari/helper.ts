@@ -1,6 +1,6 @@
 import { Channel } from "ari-client"
 import { trunkNumberMap } from "../number-map"
-import { vars } from "../config"
+import { BLANK_VALUE, vars } from "../config"
 import axios, { isAxiosError } from "axios"
 
 export function getTrunkName(channel: Channel) {
@@ -24,12 +24,16 @@ export function getCallerNumber(channel: Channel) {
 export async function getAgentId(number: string) {
   let agentId = vars.defaultAgentId
 
+  if (vars.webhookUrl === BLANK_VALUE) {
+    console.log("no webhook url, using default agent id")
+    return agentId
+  }
+
   try {
     const { data } = await axios.get(`${vars.webhookUrl}/${number}`)
     const agent_id = data?.agent_id
     if (agent_id) {
       agentId = agent_id
-      console.log("got agentID", agentId)
     }
     return agentId
   } catch (e) {
