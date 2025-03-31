@@ -4,7 +4,7 @@ import type { ActiveCalls, CallSession } from "./types"
 import { vars } from "../config"
 import { Call11 } from "../11abs/call11"
 import { getAgentId, getCallerNumber } from "./helper"
-// import axios from "axios"
+import axios from "axios"
 
 export class EventListeners {
   constructor(private client: Client, private activeCalls: ActiveCalls) {}
@@ -109,16 +109,16 @@ export class EventListeners {
         callSession.channel.hangup()
         if (!conversationId) return console.log("onDisconnect no conversationid")
         // no webhooks for now, soon
-        // try {
-        //   const { data } = await axios.post(vars.webhookUrl, {
-        //     number: callerNumber,
-        //     agentId,
-        //     conversationId,
-        //   })
-        //   console.log("disconnect webhook done", callSession.channel.caller.number, agentId, conversationId, data)
-        // } catch (e: any) {
-        //   console.log("error disconnect webhook", e?.message, e?.response?.data)
-        // }
+        try {
+          const { data } = await axios.post(vars.webhookUrl, {
+            number: callerNumber,
+            agentId,
+            conversationId,
+          })
+          console.log("disconnect webhook done", callSession.channel.caller.number, agentId, conversationId, data)
+        } catch (e: any) {
+          console.log("error disconnect webhook", e?.message, e?.response?.data)
+        }
       }
       callSession.call11 = new Call11(sessionId, { onDisconnect, agentId })
     })
