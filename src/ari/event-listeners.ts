@@ -3,7 +3,7 @@ import { randomUUID } from "crypto"
 import type { ActiveCalls, CallSession } from "./types"
 import { vars } from "../config"
 import { Call11 } from "../11abs/call11"
-import { getCallerNumber } from "./helper"
+import { getAgentId, getCallerNumber } from "./helper"
 // import axios from "axios"
 
 export class EventListeners {
@@ -24,13 +24,15 @@ export class EventListeners {
 
     try {
       const callerNumber = channel.caller.number
-      const receivingNumber = getCallerNumber(channel)
+      const receiverNumber = getCallerNumber(channel)
 
-      console.log(`New call from ${callerNumber} to ${channel.connected.number} (${receivingNumber})`)
+      console.log(`New call from ${callerNumber} to ${channel.connected.number} (${receiverNumber})`)
       const sessionId = randomUUID()
       const callSession: CallSession = {
         sessionId,
         channel,
+        callerNumber,
+        receiverNumber,
       }
       this.activeCalls.set(channel.id, callSession)
 
@@ -62,12 +64,12 @@ export class EventListeners {
     const { channel } = callSession
 
     try {
-      console.log(`Answering channel ${channel.id}`)
+      // console.log(`Answering channel ${channel.id}`)
       await channel.answer()
 
       const bridge = await this.createBridge(callSession)
       await bridge.addChannel({ channel: channel.id })
-      console.log(`Incoming channel ${channel.id} added to bridge ${bridge.id}.`)
+      // console.log(`Incoming channel ${channel.id} added to bridge ${bridge.id}.`)
 
       await this.createExtChannel(callSession)
     } catch (error: any) {
@@ -79,28 +81,37 @@ export class EventListeners {
   async createBridge(callSession: CallSession) {
     const bridge = this.client.Bridge()
     await bridge.create({ type: "mixing" })
-    console.log(`Bridge created with id: ${bridge.id}`)
+    // console.log(`Bridge created with id: ${bridge.id}`)
     callSession.bridge = bridge
     return bridge
   }
 
   async createExtChannel(callSession: CallSession) {
-    const { bridge, sessionId } = callSession
+    const { bridge, sessionId, receiverNumber, callerNumber } = callSession
     if (!bridge) return
 
     const extChannel = this.client.Channel()
     extChannel.on("StasisStart", async (_, chan: Channel) => {
       await bridge.addChannel({ channel: chan.id })
-      console.log(`External media channel ${chan.id} added to bridge ${bridge.id}.`)
+      // console.log(`External media channel ${chan.id} added to bridge ${bridge.id}.`)
 
-      const agentId = await this.getChanVar(callSession.channel, "AGENT_ID")
+      // const agentId = await this.getChanVar(callSession.channel, "AGENT_ID")
+
+      const agentId = await getAgentId(receiverNumber)
+
+      if (!agentId) {
+        console.log("no agent id, hanging up")
+        await callSession.channel.hangup()
+        return
+      }
+
       const onDisconnect = async (agentId: string, conversationId?: string) => {
         callSession.channel.hangup()
         if (!conversationId) return console.log("onDisconnect no conversationid")
         // no webhooks for now, soon
         // try {
         //   const { data } = await axios.post(vars.webhookUrl, {
-        //     number: callSession.channel.caller.number.replace("+", ""),
+        //     number: callerNumber,
         //     agentId,
         //     conversationId,
         //   })

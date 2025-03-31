@@ -5,6 +5,8 @@ export interface CallSession {
   sessionId: string
   channel: Channel
   extChannel?: Channel
+  receiverNumber: string
+  callerNumber: string
   bridge?: Bridge
   call11?: Call11
 }

@@ -36,7 +36,7 @@ export class Call11 {
 
   initClientWs() {
     const clientWs = new WebSocket(`${vars.webSocketUrl}?sessionId=${this.sessionId}`)
-    console.info(`[${this.sessionId}] ws connected`)
+    // console.info(`[${this.sessionId}] ws connected`)
 
     clientWs.on("message", async (message: any) => {
       this.elevenLabs?.sendAudio(message)

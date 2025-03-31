@@ -30,7 +30,7 @@ export class ElevenLabs {
     const elevenLabsWs = new WebSocket(`${vars.elevenLabsUrl}?agent_id=${this.agentId}`)
 
     elevenLabsWs.on("open", () => {
-      console.info(`[${this.sessionId}] 11abs connected`)
+      // console.info(`[${this.sessionId}] 11abs connected`)
     })
     elevenLabsWs.on("message", this.handleMessage)
     elevenLabsWs.on("error", (error) => console.error("11abs error:", error))
@@ -60,11 +60,11 @@ export class ElevenLabs {
           break
 
         case "user_transcript":
-          console.log(`[${this.sessionId}] USER:`, message.user_transcription_event.user_transcript)
+          // console.log(`[${this.sessionId}] USER:`, message.user_transcription_event.user_transcript)
           break
 
         case "agent_response":
-          console.log(`[${this.sessionId}] AGENT:`, message.agent_response_event.agent_response)
+          // console.log(`[${this.sessionId}] AGENT:`, message.agent_response_event.agent_response)
           break
 
         case "audio":
