@@ -26,3 +26,12 @@ export const vars = {
   defaultTransport: "tcp",
   defaultEncapsulation: "audiosocket",
 }
+
+// check envs
+
+if (Object.values(env).some((v) => !v)) {
+  console.log("Missing env variables, please check your .env file")
+  const { WEB_SOCKET_PORT, HOST, ARI_PORT, AUDIO_SOCKET_PORT, ...rest } = env
+  console.log(rest)
+  process.exit(1)
+}
