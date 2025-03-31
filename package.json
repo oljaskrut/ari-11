@@ -10,9 +10,11 @@
   },
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "tsc && node dist/index.js",
+    "rtp": "tsc && node dist/rtp-server.js"
   },
   "dependencies": {
+    "@fonoster/streams": "^0.9.56",
     "@types/ari-client": "^2.2.13",
     "@types/express": "^5.0.0",
     "ari-client": "^2.2.0",
