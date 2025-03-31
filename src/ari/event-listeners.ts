@@ -3,6 +3,7 @@ import { randomUUID } from "crypto"
 import type { ActiveCalls, CallSession } from "./types"
 import { vars } from "../config"
 import { Call11 } from "../11abs/call11"
+import { getCallerNumber } from "./helper"
 // import axios from "axios"
 
 export class EventListeners {
@@ -22,9 +23,10 @@ export class EventListeners {
     if (!channel.caller.number && !channel.caller.name) return
 
     try {
-      // @ts-ignore
-      const receivingNumber = channel?.caller_rdnis
-      console.log(`New call from ${channel.caller.number} to ${channel.connected.number} (${receivingNumber})`)
+      const callerNumber = channel.caller.number
+      const receivingNumber = getCallerNumber(channel)
+
+      console.log(`New call from ${callerNumber} to ${channel.connected.number} (${receivingNumber})`)
       const sessionId = randomUUID()
       const callSession: CallSession = {
         sessionId,
