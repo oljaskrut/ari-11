@@ -118,9 +118,6 @@ audioSocket.onConnection(async (req, res) => {
     session.lastActivity = Date.now()
 
     if (session.wsConnection && session.wsConnection.readyState === WebSocket.OPEN) {
-      if (data.byteLength < 640) {
-        console.log("fromAS", data.toString())
-      }
       session.wsConnection.send(data)
     }
   })

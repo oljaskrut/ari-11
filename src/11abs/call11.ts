@@ -1,7 +1,10 @@
 import WebSocket from "ws"
 import { ElevenLabs } from "./elevenlabs"
 import { AudioQueue } from "../utils/audio-queue"
-import { vars } from "../config"
+import { env, vars } from "../config"
+import { FileWriter } from "wav"
+import { timestamp } from "../utils/utils"
+import { JitterBuffer } from "./jitter-buffer"
 
 export class Call11 {
   sessionId: string
@@ -35,11 +38,40 @@ export class Call11 {
   }
 
   initClientWs() {
+    let outputFileStream: FileWriter | undefined
+    if (env.environment === "dev") {
+      outputFileStream = new FileWriter(`test-${timestamp()}.wav`, {
+        sampleRate: 16000,
+        channels: 1,
+      })
+    }
+
+    // const SAMPLE_RATE = 16000
+    // const BIT_DEPTH = 16
+    // const BUFFER_DURATION_MS = 200 // Adjust buffer size (milliseconds)
+    // const MIN_BUFFER_START_FACTOR = 0.6
+
+    // const jitterBuffer = new JitterBuffer({
+    //   targetDurationMs: BUFFER_DURATION_MS,
+    //   minThresholdFactor: MIN_BUFFER_START_FACTOR,
+    //   sampleRate: SAMPLE_RATE,
+    //   bitDepth: BIT_DEPTH,
+    //   onChunkReadyCallback: (chunk) => {
+    //     // This is where you use the *buffered* audio data
+    //     this.elevenLabs?.sendAudio(chunk)
+    //     outputFileStream.write(chunk)
+    //     // You could also perform your quality analysis here on the buffered chunk
+    //     // analyzeAudioChunk(chunk);
+    //   },
+    // })
+
     const clientWs = new WebSocket(`${vars.webSocketUrl}?sessionId=${this.sessionId}`)
     // console.info(`[${this.sessionId}] ws connected`)
 
     clientWs.on("message", async (message: any) => {
+      // jitterBuffer.write(message)
       this.elevenLabs?.sendAudio(message)
+      outputFileStream?.write(message)
     })
     clientWs.on("close", () => {
       console.log(`[${this.sessionId}] ws disconnected`)

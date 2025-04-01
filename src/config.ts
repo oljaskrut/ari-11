@@ -9,6 +9,7 @@ export const env = {
   ARI_PASS: process.env.ARI_PASS ?? "",
   AGENT_ID: process.env.AGENT_ID ?? "",
   WEBHOOK_URL: process.env.WEBHOOK_URL ?? BLANK_VALUE,
+  environment: process.env.ENVIRONMENT,
 }
 
 export const vars = {
@@ -27,7 +28,7 @@ export const vars = {
   defaultFormat: "slin16",
   defaultTransport: "tcp",
   defaultEncapsulation: "audiosocket",
-  logTranscripts: true,
+  logTranscripts: env.environment === "dev",
 }
 
 // check envs
