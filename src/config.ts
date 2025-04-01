@@ -25,7 +25,7 @@ export const vars = {
   webhookUrl: env.WEBHOOK_URL,
 
   defaultApp: "externalMedia",
-  defaultFormat: "slin16",
+  defaultFormat: "slin",
   defaultTransport: "tcp",
   defaultEncapsulation: "audiosocket",
   logTranscripts: env.environment === "dev",

@@ -1,11 +1,15 @@
-import { Writable } from "stream"
 import { Buffer } from "buffer" // Explicit import for clarity
 
+const SAMPLE_RATE = 8000
+const BIT_DEPTH = 8
+const BUFFER_DURATION_MS = 160 // Adjust buffer size (milliseconds)
+const MIN_BUFFER_START_FACTOR = 0.6
+
 interface JitterBufferOptions {
-  targetDurationMs: number // Target buffer size in milliseconds
+  targetDurationMs?: number // Target buffer size in milliseconds
   minThresholdFactor?: number // Factor of target duration to reach before starting processing (e.g., 0.5 for 50%)
-  sampleRate: number // e.g., 16000
-  bitDepth: number // e.g., 16
+  sampleRate?: number // e.g., 16000
+  bitDepth?: number // e.g., 16
   onChunkReadyCallback: (chunk: Buffer) => void | Promise<void> // Your function to process buffered audio
 }
 
@@ -25,9 +29,9 @@ export class JitterBuffer {
   private isProcessing: boolean = false
 
   constructor(options: JitterBufferOptions) {
-    this.targetDurationMs = options.targetDurationMs
-    this.sampleRate = options.sampleRate
-    this.bitDepth = options.bitDepth
+    this.targetDurationMs = options.targetDurationMs ?? BUFFER_DURATION_MS
+    this.sampleRate = options.sampleRate ?? SAMPLE_RATE
+    this.bitDepth = options.bitDepth ?? BIT_DEPTH
     this.onChunkReadyCallback = options.onChunkReadyCallback
 
     if (this.bitDepth % 8 !== 0) {
@@ -42,7 +46,7 @@ export class JitterBuffer {
     this.bytesPerMs = (this.sampleRate * this.bytesPerSample) / 1000
     this.targetBufferSizeBytes = Math.max(this.bytesPerSample, this.targetDurationMs * this.bytesPerMs) // Ensure at least one sample fits
 
-    const minThresholdFactor = options.minThresholdFactor ?? 0.5 // Default to 50%
+    const minThresholdFactor = options.minThresholdFactor ?? MIN_BUFFER_START_FACTOR // Default to 50%
     this.minBufferBeforeProcessingBytes = Math.max(this.bytesPerSample, this.targetBufferSizeBytes * minThresholdFactor)
 
     // console.log(

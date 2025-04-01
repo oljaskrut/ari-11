@@ -41,27 +41,15 @@ export class Call11 {
     let outputFileStream: FileWriter | undefined
     if (env.environment === "dev") {
       outputFileStream = new FileWriter(`test-${timestamp()}.wav`, {
-        sampleRate: 16000,
+        sampleRate: 8000,
         channels: 1,
       })
     }
 
-    // const SAMPLE_RATE = 16000
-    // const BIT_DEPTH = 16
-    // const BUFFER_DURATION_MS = 200 // Adjust buffer size (milliseconds)
-    // const MIN_BUFFER_START_FACTOR = 0.6
-
     // const jitterBuffer = new JitterBuffer({
-    //   targetDurationMs: BUFFER_DURATION_MS,
-    //   minThresholdFactor: MIN_BUFFER_START_FACTOR,
-    //   sampleRate: SAMPLE_RATE,
-    //   bitDepth: BIT_DEPTH,
     //   onChunkReadyCallback: (chunk) => {
-    //     // This is where you use the *buffered* audio data
     //     this.elevenLabs?.sendAudio(chunk)
-    //     outputFileStream.write(chunk)
-    //     // You could also perform your quality analysis here on the buffered chunk
-    //     // analyzeAudioChunk(chunk);
+    //     outputFileStream?.write(chunk)
     //   },
     // })
 
