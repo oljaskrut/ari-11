@@ -60,11 +60,15 @@ export class ElevenLabs {
           break
 
         case "user_transcript":
-          // console.log(`[${this.sessionId}] USER:`, message.user_transcription_event.user_transcript)
+          if (vars.logTranscripts) {
+            console.log(`[${this.sessionId}] USER:`, message.user_transcription_event.user_transcript)
+          }
           break
 
         case "agent_response":
-          // console.log(`[${this.sessionId}] AGENT:`, message.agent_response_event.agent_response)
+          if (vars.logTranscripts) {
+            console.log(`[${this.sessionId}] AGENT:`, message.agent_response_event.agent_response)
+          }
           break
 
         case "audio":

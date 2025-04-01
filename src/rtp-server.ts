@@ -56,6 +56,7 @@ wss.on("connection", (ws, req) => {
         console.log(`Session ${sessionId} started streaming`)
         session.started = true
       }
+      console.log("fromWS", data.byteLength)
       session.audioConnection.write(data)
     }
   })
@@ -118,6 +119,7 @@ audioSocket.onConnection(async (req, res) => {
     session.lastActivity = Date.now()
 
     if (session.wsConnection && session.wsConnection.readyState === WebSocket.OPEN) {
+      console.log("fromAS", data.byteLength)
       session.wsConnection.send(data)
     }
   })

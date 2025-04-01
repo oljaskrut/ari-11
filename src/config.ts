@@ -27,6 +27,7 @@ export const vars = {
   defaultFormat: "slin16",
   defaultTransport: "tcp",
   defaultEncapsulation: "audiosocket",
+  logTranscripts: true,
 }
 
 // check envs

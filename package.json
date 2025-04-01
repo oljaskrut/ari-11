@@ -14,7 +14,7 @@
     "rtp": "tsc && node dist/rtp-server.js"
   },
   "dependencies": {
-    "@fonoster/streams": "^0.9.56",
+    "@fonoster/streams": "0.9.12",
     "@types/ari-client": "^2.2.13",
     "@types/express": "^5.0.0",
     "ari-client": "^2.2.0",
