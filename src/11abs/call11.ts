@@ -2,9 +2,13 @@ import WebSocket from "ws"
 import { ElevenLabs } from "./elevenlabs"
 import { AudioQueue } from "../utils/audio-queue"
 import { env, vars } from "../config"
-import { FileWriter } from "wav"
 import { timestamp } from "../utils/utils"
-import { JitterBuffer } from "./jitter-buffer"
+
+interface Call11Options {
+  onDisconnect?: (agentId: string, conversationId?: string) => void
+  agentId?: string
+  callerNumber?: string
+}
 
 export class Call11 {
   sessionId: string
@@ -12,16 +16,12 @@ export class Call11 {
   clientWs?: WebSocket
   elevenLabs?: ElevenLabs
   agentId: string
+  callerNumber?: string
 
-  constructor(
-    sessionId: string,
-    {
-      onDisconnect,
-      agentId,
-    }: { onDisconnect?: (agentId: string, conversationId?: string) => void; agentId?: string } = {},
-  ) {
+  constructor(sessionId: string, { onDisconnect, agentId, callerNumber }: Call11Options = {}) {
     this.sessionId = sessionId
     this.onDisconnect = onDisconnect
+    this.callerNumber = callerNumber
 
     this.agentId = agentId ?? vars.defaultAgentId
 
@@ -32,20 +32,18 @@ export class Call11 {
   initElevenLabs() {
     const sendAudioOut = (data: Buffer) => this.clientWs?.send(data)
     const audioQueue = new AudioQueue(sendAudioOut)
-    const elevenLabs = new ElevenLabs(this.agentId, this.sessionId, audioQueue, this.onDisconnect)
+    const elevenLabs = new ElevenLabs({
+      agentId: this.agentId,
+      sessionId: this.sessionId,
+      audioQueue,
+      onDisconnect: this.onDisconnect,
+      callerNumber: this.callerNumber,
+    })
     this.elevenLabs = elevenLabs
     elevenLabs.init()
   }
 
   initClientWs() {
-    let outputFileStream: FileWriter | undefined
-    if (env.environment === "dev") {
-      outputFileStream = new FileWriter(`test-${timestamp()}.wav`, {
-        sampleRate: 8000,
-        channels: 1,
-      })
-    }
-
     // const jitterBuffer = new JitterBuffer({
     //   onChunkReadyCallback: (chunk) => {
     //     this.elevenLabs?.sendAudio(chunk)
@@ -59,7 +57,6 @@ export class Call11 {
     clientWs.on("message", async (message: any) => {
       // jitterBuffer.write(message)
       this.elevenLabs?.sendAudio(message)
-      outputFileStream?.write(message)
     })
     clientWs.on("close", () => {
       console.log(`[${this.sessionId}] ws disconnected`)

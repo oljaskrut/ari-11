@@ -121,7 +121,7 @@ export class EventListeners {
           console.log("error disconnect webhook", e?.message, e?.response?.data)
         }
       }
-      callSession.call11 = new Call11(sessionId, { onDisconnect, agentId })
+      callSession.call11 = new Call11(sessionId, { onDisconnect, agentId, callerNumber: callerNumber.replace("+", "") })
     })
     extChannel.on("StasisEnd", (_, chan: Channel) => {
       console.log(`External media channel ended: ${chan.id}`)

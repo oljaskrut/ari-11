@@ -3,6 +3,14 @@ import { safeParseJSON } from "../utils/utils"
 import type { AudioQueue } from "../utils/audio-queue"
 import { vars } from "../config"
 
+interface ElevenLabsOptions {
+  agentId: string
+  sessionId: string
+  audioQueue: AudioQueue
+  onDisconnect?: (agentId: string, conversationId?: string) => void
+  callerNumber?: string
+}
+
 export class ElevenLabs {
   agentId: string
   sessionId: string
@@ -11,17 +19,14 @@ export class ElevenLabs {
   audioQueue: AudioQueue
   onDisconnect?: (agentId: string, conversationId?: string) => void
   conversationId?: string
+  callerNumber?: string
 
-  constructor(
-    agentId: string,
-    sessionId: string,
-    audioQueue: AudioQueue,
-    onDisconnect?: (agentId: string, conversationId?: string) => void,
-  ) {
+  constructor({ agentId, audioQueue, onDisconnect, sessionId, callerNumber }: ElevenLabsOptions) {
     this.agentId = agentId
     this.sessionId = sessionId
     this.audioQueue = audioQueue
     this.onDisconnect = onDisconnect
+    this.callerNumber = callerNumber
   }
 
   init() {
@@ -31,6 +36,9 @@ export class ElevenLabs {
 
     elevenLabsWs.on("open", () => {
       // console.info(`[${this.sessionId}] 11abs connected`)
+      if (this.callerNumber) {
+        this.sendInitiationMetadata({ caller_number: this.callerNumber })
+      }
     })
     elevenLabsWs.on("message", this.handleMessage)
     elevenLabsWs.on("error", (error) => console.error("11abs error:", error))
@@ -114,6 +122,17 @@ export class ElevenLabs {
     this.elevenLabsWs?.send(
       JSON.stringify({
         user_audio_chunk: message.toString("base64"),
+      }),
+    )
+  }
+
+  sendInitiationMetadata = ({ caller_number }: { caller_number: string }) => {
+    this.elevenLabsWs?.send(
+      JSON.stringify({
+        type: "conversation_initiation_client_data",
+        dynamic_variables: {
+          caller_number,
+        },
       }),
     )
   }
