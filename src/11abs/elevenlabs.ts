@@ -131,7 +131,7 @@ export class ElevenLabs {
       JSON.stringify({
         type: "conversation_initiation_client_data",
         dynamic_variables: {
-          caller_number,
+          custom__caller_number: caller_number,
         },
       }),
     )
