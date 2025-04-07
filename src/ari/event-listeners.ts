@@ -3,7 +3,7 @@ import { randomUUID } from "crypto"
 import type { ActiveCalls, CallSession } from "./types"
 import { BLANK_VALUE, vars } from "../config"
 import { Call11 } from "../11abs/call11"
-import { getAgentId, getCallerNumber } from "./helper"
+import { getAgent, getCallerNumber } from "./helper"
 import axios from "axios"
 
 export class EventListeners {
@@ -23,8 +23,10 @@ export class EventListeners {
     if (!channel.caller.number && !channel.caller.name) return
 
     try {
-      const callerNumber = channel.caller.number
-      const receiverNumber = getCallerNumber(channel)
+      const callerNumber = channel.caller.number.replace("+", "")
+      // const callerNumber = "+77474882617".replace("+", "")
+      const receiverNumber = getCallerNumber(channel).replace("+", "")
+      // const receiverNumber = "+77787531861".replace("+", "")
 
       console.log(`New call from ${callerNumber} to ${channel.connected.number} (${receiverNumber})`)
       const sessionId = randomUUID()
@@ -95,9 +97,7 @@ export class EventListeners {
       await bridge.addChannel({ channel: chan.id })
       // console.log(`External media channel ${chan.id} added to bridge ${bridge.id}.`)
 
-      // const agentId = await this.getChanVar(callSession.channel, "AGENT_ID")
-
-      const agentId = await getAgentId(receiverNumber)
+      const { agentId, newPrompt } = await getAgent(receiverNumber, callerNumber)
 
       if (!agentId) {
         console.log("no agent id, hanging up")
@@ -121,7 +121,12 @@ export class EventListeners {
           console.log("error disconnect webhook", e?.message, e?.response?.data)
         }
       }
-      callSession.call11 = new Call11(sessionId, { onDisconnect, agentId, callerNumber: callerNumber.replace("+", "") })
+      callSession.call11 = new Call11(sessionId, {
+        onDisconnect,
+        agentId,
+        callerNumber,
+        extendedPrompt: newPrompt,
+      })
     })
     extChannel.on("StasisEnd", (_, chan: Channel) => {
       console.log(`External media channel ended: ${chan.id}`)

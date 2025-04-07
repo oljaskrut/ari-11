@@ -3,8 +3,7 @@ import { vars } from "../config"
 
 export const callMethod =
   (client: Client) =>
-  async (number: string, { agentId, timeout }: { agentId?: string; timeout?: number } = {}) => {
-    const AGENT_ID = agentId
+  async (number: string, { timeout }: { agentId?: string; timeout?: number } = {}) => {
     timeout = timeout ?? 30_000
 
     return new Promise(async (resolve) => {
@@ -36,7 +35,6 @@ export const callMethod =
           app: vars.defaultApp,
           formats: vars.defaultFormat,
           callerId: "Pleep",
-          variables: { AGENT_ID },
         })
 
         timer = setTimeout(() => {

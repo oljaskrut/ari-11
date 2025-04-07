@@ -9,6 +9,7 @@ interface ElevenLabsOptions {
   audioQueue: AudioQueue
   onDisconnect?: (agentId: string, conversationId?: string) => void
   callerNumber?: string
+  extendedPrompt?: string
 }
 
 export class ElevenLabs {
@@ -20,13 +21,15 @@ export class ElevenLabs {
   onDisconnect?: (agentId: string, conversationId?: string) => void
   conversationId?: string
   callerNumber?: string
+  extendedPrompt?: string
 
-  constructor({ agentId, audioQueue, onDisconnect, sessionId, callerNumber }: ElevenLabsOptions) {
+  constructor({ agentId, audioQueue, onDisconnect, sessionId, callerNumber, extendedPrompt }: ElevenLabsOptions) {
     this.agentId = agentId
     this.sessionId = sessionId
     this.audioQueue = audioQueue
     this.onDisconnect = onDisconnect
     this.callerNumber = callerNumber
+    this.extendedPrompt = extendedPrompt
   }
 
   init() {
@@ -132,6 +135,13 @@ export class ElevenLabs {
         type: "conversation_initiation_client_data",
         dynamic_variables: {
           custom__caller_number: caller_number,
+        },
+        conversation_config_override: {
+          agent: {
+            prompt: {
+              prompt: this.extendedPrompt,
+            },
+          },
         },
       }),
     )

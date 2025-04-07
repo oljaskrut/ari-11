@@ -21,24 +21,33 @@ export function getCallerNumber(channel: Channel) {
   return trunkNumberMap[trunkName]
 }
 
-export async function getAgentId(number: string) {
+export async function getAgent(receiverNumber: string, callerNumber: string) {
   let agentId = vars.defaultAgentId
 
   if (vars.webhookUrl === BLANK_VALUE) {
     console.log("no webhook url, using default agent id")
-    return agentId
+    return { agentId, newPrompt: undefined }
   }
 
   try {
-    const { data } = await axios.get(`${vars.webhookUrl}/${number}`)
+    const { data } = await axios.get(`${vars.webhookUrl}/agent`, {
+      params: {
+        receiverNumber,
+        callerNumber,
+      },
+    })
+
     const agent_id = data?.agent_id
+    const newPrompt = data?.prompt
+
     if (agent_id) {
       agentId = agent_id
     }
-    return agentId
+    return { agentId, newPrompt }
   } catch (e) {
     if (isAxiosError(e)) {
       console.log("error getting agent id", e.message, e.response?.data)
     }
+    return { agentId, newPrompt: undefined }
   }
 }

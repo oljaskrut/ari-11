@@ -1,13 +1,13 @@
 import WebSocket from "ws"
 import { ElevenLabs } from "./elevenlabs"
 import { AudioQueue } from "../utils/audio-queue"
-import { env, vars } from "../config"
-import { timestamp } from "../utils/utils"
+import { vars } from "../config"
 
 interface Call11Options {
   onDisconnect?: (agentId: string, conversationId?: string) => void
   agentId?: string
   callerNumber?: string
+  extendedPrompt?: string
 }
 
 export class Call11 {
@@ -17,14 +17,15 @@ export class Call11 {
   elevenLabs?: ElevenLabs
   agentId: string
   callerNumber?: string
+  extendedPrompt?: string
 
-  constructor(sessionId: string, { onDisconnect, agentId, callerNumber }: Call11Options = {}) {
+  constructor(sessionId: string, { onDisconnect, agentId, callerNumber, extendedPrompt }: Call11Options = {}) {
     this.sessionId = sessionId
     this.onDisconnect = onDisconnect
     this.callerNumber = callerNumber
 
     this.agentId = agentId ?? vars.defaultAgentId
-
+    this.extendedPrompt = extendedPrompt
     this.initClientWs()
     this.initElevenLabs()
   }
@@ -38,6 +39,7 @@ export class Call11 {
       audioQueue,
       onDisconnect: this.onDisconnect,
       callerNumber: this.callerNumber,
+      extendedPrompt: this.extendedPrompt,
     })
     this.elevenLabs = elevenLabs
     elevenLabs.init()
