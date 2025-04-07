@@ -130,12 +130,12 @@ export class ElevenLabs {
   }
 
   sendInitiationMetadata = ({ caller_number }: { caller_number: string }) => {
-    this.elevenLabsWs?.send(
-      JSON.stringify({
-        type: "conversation_initiation_client_data",
-        dynamic_variables: {
-          custom__caller_number: caller_number,
-        },
+    const obj = {
+      type: "conversation_initiation_client_data",
+      dynamic_variables: {
+        custom__caller_number: caller_number,
+      },
+      ...(this.extendedPrompt && {
         conversation_config_override: {
           agent: {
             prompt: {
@@ -144,7 +144,8 @@ export class ElevenLabs {
           },
         },
       }),
-    )
+    }
+    this.elevenLabsWs?.send(JSON.stringify(obj))
   }
 
   close() {
