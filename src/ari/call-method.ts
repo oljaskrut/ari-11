@@ -1,9 +1,10 @@
 import type { Client } from "ari-client"
 import { vars } from "../config"
+import { trunkNumberMap } from "../number-map"
 
 export const callMethod =
   (client: Client) =>
-  async (number: string, { timeout }: { agentId?: string; timeout?: number } = {}) => {
+  async (number: string, trunk: string, threadId: string, { timeout }: { agentId?: string; timeout?: number } = {}) => {
     timeout = timeout ?? 30_000
 
     return new Promise(async (resolve) => {
@@ -31,10 +32,15 @@ export const callMethod =
           }
         })
         await channel.originate({
-          endpoint: `PJSIP/${number}`,
+          endpoint: `PJSIP/${number}@${trunk}`,
           app: vars.defaultApp,
           formats: vars.defaultFormat,
-          callerId: "Pleep",
+          callerId: trunkNumberMap[trunk],
+          variables: {
+            receiverNumber: number,
+            callerNumber: trunkNumberMap[trunk],
+            threadId,
+          },
         })
 
         timer = setTimeout(() => {

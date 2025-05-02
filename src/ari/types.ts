@@ -9,6 +9,7 @@ export interface CallSession {
   callerNumber: string
   bridge?: Bridge
   call11?: Call11
+  threadId?: string
 }
 
 export type ActiveCalls = Map<string, CallSession>

@@ -4,6 +4,7 @@ const app = Router()
 import { AriController } from "./ari/controller"
 import { timestamp } from "./utils/utils"
 import { vars } from "./config"
+import { trunkNumberMap } from "./number-map"
 
 const controller = new AriController()
 
@@ -28,16 +29,24 @@ app.get("/set-agent/:agentId", (req, res) => {
 })
 
 app.get("/call/:number", async (req, res) => {
-  const number = req.params.number
-  if (!number) {
+  const numberString = req.params.number
+  const threadId = req.query.threadId
+  if (!threadId || typeof threadId !== "string") {
+    res.send({ success: false, error: "no threadId" })
+    return
+  }
+  if (!numberString) {
     res.send({ success: false, error: "Invalid number" })
     return
   }
-  let agentId = req.query.agentId
-  if (agentId) {
-    agentId = agentId.toString()
+  const number = numberString.split("@")[0]
+  const trunk = numberString.split("@")[1]
+
+  if (!trunk || !Object.keys(trunkNumberMap).includes(trunk)) {
+    res.send({ success: false, error: "Invalid trunk" })
+    return
   }
-  const call = (await controller.apiMethods?.call(number, { agentId })) ?? null
+  const call = (await controller.apiMethods?.call(number, trunk, threadId)) ?? null
   res.send({ status: call, timestamp: timestamp() })
 })
 

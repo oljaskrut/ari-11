@@ -3,7 +3,7 @@ import { randomUUID } from "crypto"
 import type { ActiveCalls, CallSession } from "./types"
 import { BLANK_VALUE, vars } from "../config"
 import { Call11 } from "../11abs/call11"
-import { getAgent, getCallerNumber } from "./helper"
+import { getAgent, getCallerNumber, getChannelVar } from "./helper"
 import axios from "axios"
 
 export class EventListeners {
@@ -23,10 +23,18 @@ export class EventListeners {
     if (!channel.caller.number && !channel.caller.name) return
 
     try {
-      const callerNumber = channel.caller.number.replace("+", "")
-      // const callerNumber = "+77474882617".replace("+", "")
-      const receiverNumber = getCallerNumber(channel).replace("+", "")
-      // const receiverNumber = "+77787531861".replace("+", "")
+      let callerNumber = channel.caller.number.replace("+", "")
+      let receiverNumber = getCallerNumber(channel).replace("+", "")
+
+      const callerNumberOut = await getChannelVar(channel, "callerNumber")
+      const receiverNumberOut = await getChannelVar(channel, "receiverNumber")
+      const threadId = await getChannelVar(channel, "threadId")
+
+      if (callerNumberOut && receiverNumberOut) {
+        console.log("outgoing call", callerNumberOut, receiverNumberOut)
+        callerNumber = receiverNumberOut.replace("+", "")
+        receiverNumber = callerNumberOut.replace("+", "")
+      }
 
       console.log(`New call from ${callerNumber} to ${channel.connected.number} (${receiverNumber})`)
       const sessionId = randomUUID()
@@ -35,6 +43,7 @@ export class EventListeners {
         channel,
         callerNumber,
         receiverNumber,
+        threadId,
       }
       this.activeCalls.set(channel.id, callSession)
 
@@ -115,6 +124,7 @@ export class EventListeners {
             number: callerNumber,
             agentId,
             conversationId,
+            threadId: callSession.threadId,
           })
           console.log("disconnect webhook done", callSession.channel.caller.number, agentId, conversationId, data)
         } catch (e: any) {

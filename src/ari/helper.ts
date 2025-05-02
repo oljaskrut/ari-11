@@ -51,3 +51,12 @@ export async function getAgent(receiverNumber: string, callerNumber: string) {
     return { agentId, newPrompt: undefined }
   }
 }
+
+export async function getChannelVar(channel: Channel, variable: string) {
+  try {
+    const varRes = await channel.getChannelVar({
+      variable,
+    })
+    return varRes?.value
+  } catch (e) {}
+}
