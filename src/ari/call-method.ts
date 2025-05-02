@@ -4,7 +4,7 @@ import { trunkNumberMap } from "../number-map"
 
 export const callMethod =
   (client: Client) =>
-  async (number: string, trunk: string, threadId: string, { timeout }: { agentId?: string; timeout?: number } = {}) => {
+  async (number: string, trunk: string, threadId: string | undefined, { timeout }: { agentId?: string; timeout?: number } = {}) => {
     timeout = timeout ?? 30_000
 
     return new Promise(async (resolve) => {

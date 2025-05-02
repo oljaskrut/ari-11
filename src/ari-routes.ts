@@ -30,11 +30,8 @@ app.get("/set-agent/:agentId", (req, res) => {
 
 app.get("/call/:number", async (req, res) => {
   const numberString = req.params.number
-  const threadId = req.query.threadId
-  if (!threadId || typeof threadId !== "string") {
-    res.send({ success: false, error: "no threadId" })
-    return
-  }
+  const threadId = req.query.threadId as string | undefined
+
   if (!numberString) {
     res.send({ success: false, error: "Invalid number" })
     return
