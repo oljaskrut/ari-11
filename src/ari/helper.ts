@@ -22,13 +22,6 @@ export function getCallerNumber(channel: Channel) {
 }
 
 export async function getAgent(receiverNumber: string, callerNumber: string) {
-  let agentId = vars.defaultAgentId
-
-  if (vars.webhookUrl === BLANK_VALUE) {
-    console.log("no webhook url, using default agent id")
-    return { agentId, newPrompt: undefined }
-  }
-
   try {
     const { data } = await axios.get(`${vars.webhookUrl}/agent`, {
       params: {
@@ -37,18 +30,15 @@ export async function getAgent(receiverNumber: string, callerNumber: string) {
       },
     })
 
-    const agent_id = data?.agent_id
+    const agent_id = data?.agent_id as string
     const newPrompt = data?.prompt
 
-    if (agent_id) {
-      agentId = agent_id
-    }
-    return { agentId, newPrompt }
+    return { agentId: agent_id, newPrompt }
   } catch (e) {
     if (isAxiosError(e)) {
       console.log("error getting agent id", e.message, e.response?.data)
     }
-    return { agentId, newPrompt: undefined }
+    return { agentId: undefined, newPrompt: undefined }
   }
 }
 
