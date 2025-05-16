@@ -114,7 +114,7 @@ audioSocket.onConnection(async (req, res) => {
   res.onData((data: Buffer) => {
     const session = sessions.get(sessionId)
     if (!session) return
-
+    console.log("PACKETS", data.length)
     session.lastActivity = Date.now()
 
     if (session.wsConnection && session.wsConnection.readyState === WebSocket.OPEN) {
