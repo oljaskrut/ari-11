@@ -23,22 +23,19 @@ export function getCallerNumber(channel: Channel) {
 
 export async function getAgent(receiverNumber: string, callerNumber: string) {
   try {
-    const { data } = await axios.get(`${vars.webhookUrl}/agent`, {
+    const { data } = await axios.get<IGetAgent>(`${vars.webhookUrl}/agent`, {
       params: {
         receiverNumber,
         callerNumber,
       },
     })
 
-    const agent_id = data?.agent_id as string
-    const newPrompt = data?.prompt
-
-    return { agentId: agent_id, newPrompt }
+    return data
   } catch (e) {
     if (isAxiosError(e)) {
       console.log("error getting agent id", e.message, e.response?.data)
     }
-    return { agentId: undefined, newPrompt: undefined }
+    return
   }
 }
 
@@ -49,4 +46,13 @@ export async function getChannelVar(channel: Channel, variable: string) {
     })
     return varRes?.value
   } catch (e) {}
+}
+
+interface IGetAgent {
+  agent_id: string
+  assistantId: string
+  threadId: string
+  callerNumber: string
+  receiverNumber: string
+  prompt: string
 }

@@ -106,13 +106,15 @@ export class EventListeners {
       await bridge.addChannel({ channel: chan.id })
       // console.log(`External media channel ${chan.id} added to bridge ${bridge.id}.`)
 
-      const { agentId, newPrompt } = await getAgent(receiverNumber, callerNumber)
+      const agentData = await getAgent(receiverNumber, callerNumber)
 
-      if (!agentId) {
+      if (!agentData) {
         console.log("no agent id, hanging up")
         await callSession.channel.hangup()
         return
       }
+
+      callSession.threadId = agentData.threadId
 
       const onDisconnect = async (agentId: string, conversationId?: string) => {
         callSession.channel.hangup()
@@ -133,9 +135,11 @@ export class EventListeners {
       }
       callSession.call11 = new Call11(sessionId, {
         onDisconnect,
-        agentId,
+        agentId: agentData.agent_id,
         callerNumber,
-        extendedPrompt: newPrompt,
+        extendedPrompt: agentData.prompt,
+        threadId: agentData.threadId,
+        assistantId: agentData.assistantId,
       })
     })
     extChannel.on("StasisEnd", (_, chan: Channel) => {

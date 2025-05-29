@@ -8,6 +8,8 @@ interface Call11Options {
   agentId?: string
   callerNumber?: string
   extendedPrompt?: string
+  threadId?: string
+  assistantId?: string
 }
 
 export class Call11 {
@@ -18,11 +20,18 @@ export class Call11 {
   agentId: string
   callerNumber?: string
   extendedPrompt?: string
+  threadId?: string
+  assistantId?: string
 
-  constructor(sessionId: string, { onDisconnect, agentId, callerNumber, extendedPrompt }: Call11Options = {}) {
+  constructor(
+    sessionId: string,
+    { onDisconnect, agentId, callerNumber, extendedPrompt, threadId, assistantId }: Call11Options = {},
+  ) {
     this.sessionId = sessionId
     this.onDisconnect = onDisconnect
     this.callerNumber = callerNumber
+    this.threadId = threadId
+    this.assistantId = assistantId
 
     this.agentId = agentId ?? vars.defaultAgentId
     this.extendedPrompt = extendedPrompt
@@ -40,6 +49,8 @@ export class Call11 {
       onDisconnect: this.onDisconnect,
       callerNumber: this.callerNumber,
       extendedPrompt: this.extendedPrompt,
+      threadId: this.threadId,
+      assistantId: this.assistantId,
     })
     this.elevenLabs = elevenLabs
     elevenLabs.init()

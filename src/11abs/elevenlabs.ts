@@ -10,6 +10,8 @@ interface ElevenLabsOptions {
   onDisconnect?: (agentId: string, conversationId?: string) => void
   callerNumber?: string
   extendedPrompt?: string
+  threadId?: string
+  assistantId?: string
 }
 
 export class ElevenLabs {
@@ -22,14 +24,27 @@ export class ElevenLabs {
   conversationId?: string
   callerNumber?: string
   extendedPrompt?: string
+  threadId?: string
+  assistantId?: string
 
-  constructor({ agentId, audioQueue, onDisconnect, sessionId, callerNumber, extendedPrompt }: ElevenLabsOptions) {
+  constructor({
+    agentId,
+    audioQueue,
+    onDisconnect,
+    sessionId,
+    callerNumber,
+    extendedPrompt,
+    threadId,
+    assistantId,
+  }: ElevenLabsOptions) {
     this.agentId = agentId
     this.sessionId = sessionId
     this.audioQueue = audioQueue
     this.onDisconnect = onDisconnect
     this.callerNumber = callerNumber
     this.extendedPrompt = extendedPrompt
+    this.threadId = threadId
+    this.assistantId = assistantId
   }
 
   init() {
@@ -40,7 +55,11 @@ export class ElevenLabs {
     elevenLabsWs.on("open", () => {
       // console.info(`[${this.sessionId}] 11abs connected`)
       if (this.callerNumber) {
-        this.sendInitiationMetadata({ caller_number: this.callerNumber })
+        this.sendInitiationMetadata({
+          caller_number: this.callerNumber,
+          threadId: this.threadId,
+          assistantId: this.assistantId,
+        })
       }
     })
     elevenLabsWs.on("message", this.handleMessage)
@@ -129,11 +148,17 @@ export class ElevenLabs {
     )
   }
 
-  sendInitiationMetadata = ({ caller_number }: { caller_number: string }) => {
+  sendInitiationMetadata = ({
+    caller_number,
+    threadId,
+    assistantId,
+  }: { caller_number?: string; threadId?: string; assistantId?: string } = {}) => {
     const obj = {
       type: "conversation_initiation_client_data",
       dynamic_variables: {
         custom__caller_number: caller_number,
+        custom__threadId: threadId,
+        custom__assistantId: assistantId,
       },
       ...(this.extendedPrompt && {
         conversation_config_override: {
