@@ -7,6 +7,7 @@ interface Call11Options {
   onDisconnect?: (agentId: string, conversationId?: string) => void
   agentId?: string
   callerNumber?: string
+  firstMessage?: string
   extendedPrompt?: string
   threadId?: string
   assistantId?: string
@@ -19,13 +20,14 @@ export class Call11 {
   elevenLabs?: ElevenLabs
   agentId: string
   callerNumber?: string
+  firstMessage?: string
   extendedPrompt?: string
   threadId?: string
   assistantId?: string
 
   constructor(
     sessionId: string,
-    { onDisconnect, agentId, callerNumber, extendedPrompt, threadId, assistantId }: Call11Options = {},
+    { onDisconnect, agentId, callerNumber, firstMessage, extendedPrompt, threadId, assistantId }: Call11Options = {},
   ) {
     this.sessionId = sessionId
     this.onDisconnect = onDisconnect
@@ -34,6 +36,7 @@ export class Call11 {
     this.assistantId = assistantId
 
     this.agentId = agentId ?? vars.defaultAgentId
+    this.firstMessage = firstMessage
     this.extendedPrompt = extendedPrompt
     this.initClientWs()
     this.initElevenLabs()
@@ -48,6 +51,7 @@ export class Call11 {
       audioQueue,
       onDisconnect: this.onDisconnect,
       callerNumber: this.callerNumber,
+			firstMessage: this.firstMessage,
       extendedPrompt: this.extendedPrompt,
       threadId: this.threadId,
       assistantId: this.assistantId,

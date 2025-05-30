@@ -10,6 +10,10 @@ export interface CallSession {
   bridge?: Bridge
   call11?: Call11
   threadId?: string
+  firstMessage?: string
+  prompt?: string
+  agentId?: string
+	assistantId?: string
 }
 
 export type ActiveCalls = Map<string, CallSession>

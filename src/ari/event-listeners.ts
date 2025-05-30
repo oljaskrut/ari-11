@@ -29,6 +29,10 @@ export class EventListeners {
       const callerNumberOut = await getChannelVar(channel, "callerNumber")
       const receiverNumberOut = await getChannelVar(channel, "receiverNumber")
       const threadId = await getChannelVar(channel, "threadId")
+      const firstMessage = await getChannelVar(channel, "firstMessage")
+      const prompt = await getChannelVar(channel, "prompt")
+      const agentId = await getChannelVar(channel, "agentId")
+      const assistantId = await getChannelVar(channel, "assistantId")
 
       if (callerNumberOut && receiverNumberOut) {
         console.log("outgoing call", callerNumberOut, receiverNumberOut)
@@ -44,6 +48,10 @@ export class EventListeners {
         callerNumber,
         receiverNumber,
         threadId,
+        prompt,
+        firstMessage,
+        agentId,
+        assistantId,
       }
       this.activeCalls.set(channel.id, callSession)
 
@@ -106,15 +114,39 @@ export class EventListeners {
       await bridge.addChannel({ channel: chan.id })
       // console.log(`External media channel ${chan.id} added to bridge ${bridge.id}.`)
 
-      const agentData = await getAgent(receiverNumber, callerNumber)
-
-      if (!agentData) {
-        console.log("no agent id, hanging up")
-        await callSession.channel.hangup()
-        return
+      let agentObj: {
+        agentId: string
+        assistantId: string
+        threadId: string
+        extendedPrompt?: string
+        firstMessage?: string
       }
 
-      callSession.threadId = agentData.threadId
+      if (callSession.agentId && callSession.assistantId && callSession.threadId) {
+        agentObj = {
+          agentId: callSession.agentId,
+          assistantId: callSession.assistantId,
+          threadId: callSession.threadId,
+          extendedPrompt: callSession.prompt,
+          firstMessage: callSession.firstMessage,
+        }
+      } else {
+        const agentData = await getAgent(receiverNumber, callerNumber)
+
+        if (!agentData) {
+          console.log("no agent id, hanging up")
+          await callSession.channel.hangup()
+          return
+        }
+
+        agentObj = {
+          agentId: agentData.agent_id,
+          assistantId: agentData.assistantId,
+          threadId: callSession.threadId ?? agentData.threadId,
+          extendedPrompt: agentData.prompt,
+          firstMessage: agentData.firstMessage,
+        }
+      }
 
       const onDisconnect = async (agentId: string, conversationId?: string) => {
         callSession.channel.hangup()
@@ -126,7 +158,7 @@ export class EventListeners {
             number: callerNumber,
             agentId,
             conversationId,
-            threadId: callSession.threadId,
+            threadId: agentObj.threadId,
           })
           console.log("disconnect webhook done", callSession.channel.caller.number, agentId, conversationId, data)
         } catch (e: any) {
@@ -135,11 +167,8 @@ export class EventListeners {
       }
       callSession.call11 = new Call11(sessionId, {
         onDisconnect,
-        agentId: agentData.agent_id,
         callerNumber,
-        extendedPrompt: agentData.prompt,
-        threadId: agentData.threadId,
-        assistantId: agentData.assistantId,
+        ...agentObj,
       })
     })
     extChannel.on("StasisEnd", (_, chan: Channel) => {

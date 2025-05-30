@@ -9,6 +9,7 @@ interface ElevenLabsOptions {
   audioQueue: AudioQueue
   onDisconnect?: (agentId: string, conversationId?: string) => void
   callerNumber?: string
+  firstMessage?: string
   extendedPrompt?: string
   threadId?: string
   assistantId?: string
@@ -23,6 +24,7 @@ export class ElevenLabs {
   onDisconnect?: (agentId: string, conversationId?: string) => void
   conversationId?: string
   callerNumber?: string
+  firstMessage?: string
   extendedPrompt?: string
   threadId?: string
   assistantId?: string
@@ -33,6 +35,7 @@ export class ElevenLabs {
     onDisconnect,
     sessionId,
     callerNumber,
+    firstMessage,
     extendedPrompt,
     threadId,
     assistantId,
@@ -42,6 +45,7 @@ export class ElevenLabs {
     this.audioQueue = audioQueue
     this.onDisconnect = onDisconnect
     this.callerNumber = callerNumber
+    this.firstMessage = firstMessage
     this.extendedPrompt = extendedPrompt
     this.threadId = threadId
     this.assistantId = assistantId
@@ -166,6 +170,13 @@ export class ElevenLabs {
             prompt: {
               prompt: this.extendedPrompt,
             },
+          },
+        },
+      }),
+      ...(this.firstMessage && {
+        conversation_config_override: {
+          agent: {
+            first_message: this.firstMessage,
           },
         },
       }),

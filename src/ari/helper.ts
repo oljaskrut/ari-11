@@ -29,7 +29,7 @@ export async function getAgent(receiverNumber: string, callerNumber: string) {
         callerNumber,
       },
     })
-
+		
     return data
   } catch (e) {
     if (isAxiosError(e)) {
@@ -54,5 +54,6 @@ interface IGetAgent {
   threadId: string
   callerNumber: string
   receiverNumber: string
-  prompt: string
+  prompt?: string
+	firstMessage?: string
 }

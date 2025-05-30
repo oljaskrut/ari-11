@@ -4,7 +4,25 @@ import { trunkNumberMap } from "../number-map"
 
 export const callMethod =
   (client: Client) =>
-  async (number: string, trunk: string, threadId: string | undefined, { timeout }: { agentId?: string; timeout?: number } = {}) => {
+  async ({
+    number,
+    trunk,
+    threadId,
+    timeout,
+    firstMessage,
+    prompt,
+    agentId,
+    assistantId,
+  }: {
+    number: string
+    trunk: string
+    threadId: string | undefined
+    agentId?: string
+    timeout?: number
+    firstMessage?: string
+    prompt?: string
+    assistantId?: string
+  }) => {
     timeout = timeout ?? 30_000
 
     return new Promise(async (resolve) => {
@@ -19,14 +37,14 @@ export const callMethod =
         const channel = client.Channel()
         channel.on("ChannelHangupRequest", (event) => {
           console.log("HangupRequest", number, event.cause)
-          send(`HangupRequest:${event.cause}`)
+          send(`HangupRequest with cause ${event.cause}`)
         })
         channel.on("ChannelStateChange", (event) => {
           if (event.channel.state === "Ringing") {
             console.log("Ringing", number)
           } else if (event.channel.state === "Up") {
             console.log("Up", number)
-            send(`Up:${event.channel.id}`)
+            send(`Call is Up`)
           } else {
             console.log("ChannelStateChange", number, event.channel.state)
           }
@@ -40,6 +58,10 @@ export const callMethod =
             receiverNumber: number,
             callerNumber: trunkNumberMap[trunk],
             threadId,
+            prompt,
+            firstMessage,
+            agentId,
+            assistantId,
           },
         })
 

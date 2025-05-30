@@ -28,9 +28,10 @@ app.get("/set-agent/:agentId", (req, res) => {
   res.send({ success: true, timestamp: timestamp(), agentId: vars.defaultAgentId })
 })
 
-app.get("/call/:number", async (req, res) => {
-  const numberString = req.params.number
-  const threadId = req.query.threadId as string | undefined
+app.post("/call", async (req, res) => {
+  const { numberString, threadId, firstMessage, prompt, agentId, assistantId } = req.body
+
+  console.log("POST: /call", req.body)
 
   if (!numberString) {
     res.send({ success: false, error: "Invalid number" })
@@ -43,7 +44,8 @@ app.get("/call/:number", async (req, res) => {
     res.send({ success: false, error: "Invalid trunk" })
     return
   }
-  const call = (await controller.apiMethods?.call(number, trunk, threadId)) ?? null
+  const call =
+    (await controller.apiMethods?.call({ number, trunk, threadId, firstMessage, prompt, agentId, assistantId })) ?? null
   res.send({ status: call, timestamp: timestamp() })
 })
 
